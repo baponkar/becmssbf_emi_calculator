@@ -15,28 +15,23 @@ function calculateEMI() {
   let T = parseInt(document.getElementById("years").value);
   let R = parseFloat(document.getElementById("rate").value);
 
-  // Debugging: Get date from input
-  let startDateValue = document.getElementById("startDate").value; // gives "2025-08-31" (string)
+  let startDateValue = document.getElementById("startDate").value;
   if (!startDateValue) {
     alert("⚠️ Please select a start date");
     return;
   }
-  let startDate = new Date(startDateValue); // convert to Date object
-  console.log("Start Date:", startDate);
-
+  let startDate = new Date(startDateValue);
 
   if (isNaN(A) || isNaN(T) || isNaN(R) || A <= 0 || T <= 0 || R < 0 || !startDate) {
     alert("⚠️ Please enter valid values and select a start date");
     return;
   }
 
-//   showSpinner("Calculating EMI...");
   setTimeout(() => {
     let months = T * 12;
     let principalPart = Math.floor((A / months) / 100) * 100;
     let remaining = A;
 
-    // Clear and start fresh
     let resultHTML = `
       <h3>📅 EMI Schedule</h3>
       <table>
@@ -50,11 +45,22 @@ function calculateEMI() {
     `;
 
     for (let m = 1; m <= months; m++) {
-      let interest = remaining * (R / 12 / 100);
       let principal = (m === months) ? remaining : principalPart;
+      let interest;
+
+      // First EMI is pro-rated for partial month
+      if (m === 1) {
+        let lastDayOfMonth = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0);
+        let daysInMonth = lastDayOfMonth.getDate();
+        let remainingDays = daysInMonth - startDate.getDate() + 1; // inclusive
+        interest = remaining * (R / 12 / 100) * (remainingDays / daysInMonth);
+      } else {
+        interest = remaining * (R / 12 / 100); // full month
+      }
+
       let emi = principal + interest;
 
-      // First EMI should always start from NEXT month
+      // Calculate month name and year
       let monthDate = new Date(startDate.getFullYear(), startDate.getMonth() + m, 1);
       let monthName = monthDate.toLocaleString("default", { month: "short" });
       let year = monthDate.getFullYear();
@@ -73,11 +79,8 @@ function calculateEMI() {
     }
 
     resultHTML += "</table>";
-
-    // ✅ Always update the table completely
     document.getElementById("result").innerHTML = resultHTML;
 
-    // hideSpinner();
   }, 800);
 
   alert("✅ Successfully Calculated EMI Schedule!");
@@ -165,5 +168,6 @@ function showLoading() {
 function hideLoading() {
   document.getElementById("loadingOverlay").style.visibility = "hidden";
 }
+
 
 

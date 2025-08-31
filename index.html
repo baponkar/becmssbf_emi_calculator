@@ -1,169 +1,84 @@
-// 📅 Calendar Helpers (Reusable)
-function getDateFromInput(inputId) {
-  const value = document.getElementById(inputId).value;
-  return value ? new Date(value) : null;
-}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loan EMI Calculator</title>
 
-function setDefaultDate(inputId, date = new Date()) {
-  const input = document.getElementById(inputId);
-  input.value = date.toISOString().split("T")[0]; // yyyy-mm-dd
-}
+  <!-- MathJax -->
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async
+          src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
-// 🔹 Example usage for EMI Calculator
-function calculateEMI() {
-  let A = parseFloat(document.getElementById("amount").value);
-  let T = parseInt(document.getElementById("years").value);
-  let R = parseFloat(document.getElementById("rate").value);
+  <!-- jsPDF for PDF generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-  // Debugging: Get date from input
-  let startDateValue = document.getElementById("startDate").value; // gives "2025-08-31" (string)
-  if (!startDateValue) {
-    alert("⚠️ Please select a start date");
-    return;
-  }
-  let startDate = new Date(startDateValue); // convert to Date object
-  console.log("Start Date:", startDate);
-
-
-  if (isNaN(A) || isNaN(T) || isNaN(R) || A <= 0 || T <= 0 || R < 0 || !startDate) {
-    alert("⚠️ Please enter valid values and select a start date");
-    return;
-  }
-
-//   showSpinner("Calculating EMI...");
-  setTimeout(() => {
-    let months = T * 12;
-    let principalPart = Math.floor((A / months) / 100) * 100;
-    let remaining = A;
-
-    // Clear and start fresh
-    let resultHTML = `
-      <h3>📅 EMI Schedule</h3>
-      <table>
-        <tr>
-          <th>Sr.</th>
-          <th>Month</th>
-          <th>Principal</th>
-          <th>Interest</th>
-          <th>Total EMI</th>
-        </tr>
-    `;
-
-    for (let m = 1; m <= months; m++) {
-      let interest = remaining * (R / 12 / 100);
-      let principal = (m === months) ? remaining : principalPart;
-      let emi = principal + interest;
-
-      // First EMI should always start from NEXT month
-      let monthDate = new Date(startDate.getFullYear(), startDate.getMonth() + m, 1);
-      let monthName = monthDate.toLocaleString("default", { month: "short" });
-      let year = monthDate.getFullYear();
-
-      resultHTML += `
-        <tr>
-          <td>${m}</td>
-          <td>${monthName} ${year}</td>
-          <td>${principal.toFixed(2)}</td>
-          <td>${interest.toFixed(2)}</td>
-          <td>${emi.toFixed(2)}</td>
-        </tr>
-      `;
-
-      remaining -= principal;
-    }
-
-    resultHTML += "</table>";
-
-    // ✅ Always update the table completely
-    document.getElementById("result").innerHTML = resultHTML;
-
-    // hideSpinner();
-  }, 800);
-
-  alert("✅ Successfully Calculated EMI Schedule!");
-}
+  <!-- jsPDF AutoTable plugin -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
 
 
+  <!-- External CSS -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+
+    <!-- Loading Animation -->
+    <div id="loadingOverlay">
+      <div class="spinner"></div>
+      <p>Calculating EMI...</p>
+    </div>
 
 
-function printPDF() {
-  let now = new Date();
-  let dateTime = now.toLocaleString();
-  document.getElementById("printInfo").innerHTML = "🖨 Printed on: " + dateTime;
-  window.print();
-}
+    <h1>📊 Loan EMI Calculator</h1>
 
-function downloadPDF() {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
+    <label for="amount">Loan Amount (A):</label>
+    <input type="number" id="amount" placeholder="Enter loan amount">
 
-  // Loan details
-  let A = parseFloat(document.getElementById("amount").value);
-  let T = parseInt(document.getElementById("years").value);
-  let R = parseFloat(document.getElementById("rate").value);
+    <label for="years">Tenure (T in years):</label>
+    <input type="number" id="years" placeholder="Enter tenure in years">
 
-  // 🔹 Calculate totals
-  let months = T * 12;
-  let remaining = A;
-  let principalPart = Math.floor((A / months) / 100) * 100;
-  let totalInterest = 0;
+    <label for="rate">Interest Rate (R % per annum):</label>
+    <input type="number" step="0.01" id="rate" placeholder="Enter annual interest rate">
 
-  for (let m = 1; m <= months; m++) {
-    let interest = remaining * (R / 12 / 100);
-    let principal = (m === months) ? remaining : principalPart;
-    totalInterest += interest;
-    remaining -= principal;
-  }
+    <label for="start-date">📅 Choose Start Date:</label>
+    <input type="date" id="startDate" class="date-input">
 
-  let totalPayment = A + totalInterest;
-
-  // Title
-  doc.setFontSize(18);
-  doc.text("EMI Schedule", 14, 20);
-
-  // Generated date
-  doc.setFontSize(10);
-  doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 28);
-
-  // Loan summary details
-  doc.setFontSize(12);
-  doc.text(`Loan Amount: ${A.toFixed(2)}`, 14, 40);
-  doc.text(`Tenure: ${T} years (${months} months)`, 14, 48);
-  doc.text(`Interest Rate: ${R}% p.a.`, 14, 56);
-  doc.text(`Total Interest: ${totalInterest.toFixed(2)}`, 14, 64);
-  doc.text(`Total Payment (Principal + Interest): ${totalPayment.toFixed(2)}`, 14, 72);
-
-  // Convert EMI Table into PDF
-  doc.autoTable({
-    html: '#result table',
-    startY: 80, // push table below summary
-    styles: { fontSize: 9 },
-    headStyles: { fillColor: [52, 152, 219] },
-    theme: 'grid'
-  });
-
-  // Footer: URL
-  doc.setFontSize(8);
-  let currentURL = window.location.href;
-  doc.text(`Source: ${currentURL}`, 14, doc.internal.pageSize.height - 10);
-
-  // Save PDF
-  doc.save('emi_schedule.pdf');
-
-  alert("✅ Successfully PDF Downloaded!");
-}
+    <div class="form-container">
+      <div class="button-group">
+        <button onclick="calculateEMI()">Calculate EMI</button>
+        <button onclick="downloadPDF()" class="btn">Download</button>
+      </div>
+    </div>
 
 
+    <div class="formula">
+      <h3>📐 Formula Used</h3>
+      <p>
+        Principal per month:<br>  
+        \(
+        P_m = \frac{A}{T \times 12}
+        \) 
+        <br><br>
+        Monthly EMI:<br>
+        \(
+        EMI_m = P_m + \Big( \big(A - (m-1) \times P_m\big) \times \frac{R}{12 \times 100} \Big)
+        \)
+      </p>
+    </div>
+
+    <div id="result"></div>
+    <div class="print-info" id="printInfo"></div>
+  </div>
+
+   <!-- Footer -->
+  <footer>
+    <p>© 2025 Loan EMI Calculator. All Rights Reserved.</p>
+  </footer>
 
 
-
-function showLoading() {
-  document.getElementById("loadingOverlay").style.visibility = "visible";
-}
-
-function hideLoading() {
-  document.getElementById("loadingOverlay").style.visibility = "hidden";
-}
-
-
+  <!-- External JS -->
+  <script src="script.js"></script>
+</body>
+</html>

@@ -48,19 +48,18 @@ function calculateEMI() {
       let principal = (m === months) ? remaining : principalPart;
       let interest;
 
-      // First EMI is pro-rated for partial month
+      // Pro-rate first month
       if (m === 1) {
         let lastDayOfMonth = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0);
         let daysInMonth = lastDayOfMonth.getDate();
-        let remainingDays = daysInMonth - startDate.getDate() + 1; // inclusive
+        let remainingDays = daysInMonth - startDate.getDate() + 1;
         interest = remaining * (R / 12 / 100) * (remainingDays / daysInMonth);
       } else {
-        interest = remaining * (R / 12 / 100); // full month
+        interest = remaining * (R / 12 / 100);
       }
 
       let emi = principal + interest;
 
-      // Calculate month name and year
       let monthDate = new Date(startDate.getFullYear(), startDate.getMonth() + m, 1);
       let monthName = monthDate.toLocaleString("default", { month: "short" });
       let year = monthDate.getFullYear();
@@ -79,11 +78,21 @@ function calculateEMI() {
     }
 
     resultHTML += "</table>";
-    document.getElementById("result").innerHTML = resultHTML;
+    const resultDiv = document.getElementById("result");
+    resultDiv.innerHTML = resultHTML;
+
+    // 🔹 Smooth scroll down to the result
+    resultDiv.scrollIntoView({ behavior: "smooth", block: "start" });
 
   }, 800);
 
-  alert("✅ Successfully Calculated EMI Schedule!");
+  // ✅ Show the button container after calculation
+    document.getElementById("calculateContainer").style.display = "block";
+
+    // Optional: scroll down animation
+    document.getElementById("calculateContainer").scrollIntoView({ behavior: "smooth" });
+
+    // alert("✅ Successfully Calculated EMI Schedule!");
 }
 
 
@@ -168,6 +177,5 @@ function showLoading() {
 function hideLoading() {
   document.getElementById("loadingOverlay").style.visibility = "hidden";
 }
-
 
 

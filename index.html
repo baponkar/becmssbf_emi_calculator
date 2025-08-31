@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loan EMI Calculator</title>
+
+  <!-- MathJax -->
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async
+          src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  <!-- External CSS -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+
+    <!-- Loading Animation -->
+    <div id="loadingOverlay">
+      <div class="spinner"></div>
+      <p>Calculating EMI...</p>
+    </div>
+
+
+    <h1>📊 Loan EMI Calculator</h1>
+
+    <label for="amount">Loan Amount (A):</label>
+    <input type="number" id="amount" placeholder="Enter loan amount">
+
+    <label for="years">Tenure (T in years):</label>
+    <input type="number" id="years" placeholder="Enter tenure in years">
+
+    <label for="rate">Interest Rate (R % per annum):</label>
+    <input type="number" step="0.01" id="rate" placeholder="Enter annual interest rate">
+
+    <button onclick="calculateEMI()">Calculate EMI</button>
+    <button onclick="printPDF()">Print PDF</button>
+
+    <div class="formula">
+      <h3>📐 Formula Used</h3>
+      <p>
+        Principal per month:  
+        \[
+        P_m = \frac{A}{T \times 12}
+        \]
+        Monthly EMI:  
+        \[
+        EMI_m = P_m + \Big( \big(A - (m-1) \times P_m\big) \times \frac{R}{12 \times 100} \Big)
+        \]
+        Where:  
+        - \( A \) = Loan Amount  
+        - \( T \) = Tenure in years  
+        - \( R \) = Annual Interest Rate  
+        - \( m \) = Month number
+      </p>
+    </div>
+
+    <div id="result"></div>
+    <div class="print-info" id="printInfo"></div>
+  </div>
+
+  <!-- External JS -->
+  <script src="script.js"></script>
+</body>
+</html>

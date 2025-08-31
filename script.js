@@ -14,15 +14,23 @@ function calculateEMI() {
   let A = parseFloat(document.getElementById("amount").value);
   let T = parseInt(document.getElementById("years").value);
   let R = parseFloat(document.getElementById("rate").value);
-  let startDate = getDateFromInput("startDate");
+
+  // Debugging: Get date from input
+  let startDateValue = document.getElementById("startDate").value; // gives "2025-08-31" (string)
+  if (!startDateValue) {
+    alert("⚠️ Please select a start date");
+    return;
+  }
+  let startDate = new Date(startDateValue); // convert to Date object
+  console.log("Start Date:", startDate);
+
 
   if (isNaN(A) || isNaN(T) || isNaN(R) || A <= 0 || T <= 0 || R < 0 || !startDate) {
     alert("⚠️ Please enter valid values and select a start date");
     return;
   }
 
-  showSpinner("Calculating EMI...");
-
+//   showSpinner("Calculating EMI...");
   setTimeout(() => {
     let months = T * 12;
     let principalPart = Math.floor((A / months) / 100) * 100;
@@ -33,7 +41,7 @@ function calculateEMI() {
       <h3>📅 EMI Schedule</h3>
       <table>
         <tr>
-          <th>#</th>
+          <th>Sr.</th>
           <th>Month</th>
           <th>Principal</th>
           <th>Interest</th>
@@ -69,14 +77,13 @@ function calculateEMI() {
     // ✅ Always update the table completely
     document.getElementById("result").innerHTML = resultHTML;
 
-    hideSpinner();
+    // hideSpinner();
   }, 800);
+
+  alert("✅ Successfully Calculated EMI Schedule!");
 }
 
-// Default date = today
-document.addEventListener("DOMContentLoaded", () => {
-  setDefaultDate("startDate");
-});
+
 
 
 
@@ -87,33 +94,68 @@ function printPDF() {
   window.print();
 }
 
-document.getElementById("downloadPDF").addEventListener("click", () => {
+function downloadPDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
 
-  // Title
-  doc.setFontSize(16);
-  doc.text("📅 Loan EMI Schedule", 14, 20);
+  // Loan details
+  let A = parseFloat(document.getElementById("amount").value);
+  let T = parseInt(document.getElementById("years").value);
+  let R = parseFloat(document.getElementById("rate").value);
 
-  // Extract table
-  let table = document.querySelector("#result table");
-  if (!table) {
-    alert("⚠️ Please calculate EMI first!");
-    return;
+  // 🔹 Calculate totals
+  let months = T * 12;
+  let remaining = A;
+  let principalPart = Math.floor((A / months) / 100) * 100;
+  let totalInterest = 0;
+
+  for (let m = 1; m <= months; m++) {
+    let interest = remaining * (R / 12 / 100);
+    let principal = (m === months) ? remaining : principalPart;
+    totalInterest += interest;
+    remaining -= principal;
   }
 
-  // Convert HTML table → PDF
+  let totalPayment = A + totalInterest;
+
+  // Title
+  doc.setFontSize(18);
+  doc.text("EMI Schedule", 14, 20);
+
+  // Generated date
+  doc.setFontSize(10);
+  doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 28);
+
+  // Loan summary details
+  doc.setFontSize(12);
+  doc.text(`Loan Amount: ${A.toFixed(2)}`, 14, 40);
+  doc.text(`Tenure: ${T} years (${months} months)`, 14, 48);
+  doc.text(`Interest Rate: ${R}% p.a.`, 14, 56);
+  doc.text(`Total Interest: ${totalInterest.toFixed(2)}`, 14, 64);
+  doc.text(`Total Payment (Principal + Interest): ${totalPayment.toFixed(2)}`, 14, 72);
+
+  // Convert EMI Table into PDF
   doc.autoTable({
-    html: table,
-    startY: 30,
-    theme: "grid",
-    styles: { fontSize: 10 },
-    headStyles: { fillColor: [22, 160, 133] }
+    html: '#result table',
+    startY: 80, // push table below summary
+    styles: { fontSize: 9 },
+    headStyles: { fillColor: [52, 152, 219] },
+    theme: 'grid'
   });
 
-  // Save
-  doc.save("EMI_Schedule.pdf");
-});
+  // Footer: URL
+  doc.setFontSize(8);
+  let currentURL = window.location.href;
+  doc.text(`Source: ${currentURL}`, 14, doc.internal.pageSize.height - 10);
+
+  // Save PDF
+  doc.save('emi_schedule.pdf');
+
+  alert("✅ Successfully PDF Downloaded!");
+}
+
+
+
 
 
 function showLoading() {
@@ -124,50 +166,4 @@ function hideLoading() {
   document.getElementById("loadingOverlay").style.visibility = "hidden";
 }
 
-function calculateEMI() {
-  let A = parseFloat(document.getElementById("amount").value);
-  let T = parseInt(document.getElementById("years").value);
-  let R = parseFloat(document.getElementById("rate").value);
 
-  if (isNaN(A) || isNaN(T) || isNaN(R) || A <= 0 || T <= 0 || R < 0) {
-    alert("⚠️ Please enter valid values");
-    return;
-  }
-
-  showLoading();
-
-  // Simulate processing delay for smooth animation
-  setTimeout(() => {
-    let months = T * 12;
-    let principalPart = Math.floor((A / months) / 100) * 100;
-    let resultHTML = "<h3>📅 EMI Schedule</h3><table><tr><th>#</th><th>Month</th><th>Principal</th><th>Interest</th><th>Total EMI</th></tr>";
-
-    let remaining = A;
-    let currentDate = new Date();
-
-    for (let m = 1; m <= months; m++) {
-      let interest = remaining * (R / 12 / 100);
-      let principal = (m === months) ? remaining : principalPart;
-      let emi = principal + interest;
-
-      let monthDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + m - 1, 1);
-      let monthName = monthDate.toLocaleString('default', { month: 'short' });
-      let year = monthDate.getFullYear();
-
-      resultHTML += `<tr>
-                      <td>${m}</td>
-                      <td>${monthName} ${year}</td>
-                      <td>${principal.toFixed(2)}</td>
-                      <td>${interest.toFixed(2)}</td>
-                      <td>${emi.toFixed(2)}</td>
-                     </tr>`;
-
-      remaining -= principal;
-    }
-
-    resultHTML += "</table>";
-    document.getElementById("result").innerHTML = resultHTML;
-
-    hideLoading();
-  }, 800); // delay to show animation
-}

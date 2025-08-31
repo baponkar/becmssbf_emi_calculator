@@ -161,7 +161,7 @@ function downloadPDF() {
   doc.text(`Source: ${currentURL}`, 14, doc.internal.pageSize.height - 10);
 
   // Save PDF
-  doc.save('emi_schedule.pdf');
+  doc.save(`emi_schedule_${new Date().toLocaleString()}.pdf`);
 
   alert("✅ Successfully PDF Downloaded!");
 }
@@ -177,5 +177,6 @@ function showLoading() {
 function hideLoading() {
   document.getElementById("loadingOverlay").style.visibility = "hidden";
 }
+
 
 
